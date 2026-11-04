@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoMind - 자동차 정비 파트너</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; }
+    body { background-color: #f4f6f8; padding: 15px; color: #333; }
+    .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { color: #1a73e8; font-size: 22px; text-align: center; margin-bottom: 15px; }
+    
+    /* 탭 메뉴 UI */
+    .tab-menu { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; border: none; background: none; font-weight: bold; color: #666; cursor: pointer; font-size: 14px; }
+    .tab-btn.active { color: #1a73e8; border-bottom: 3px solid #1a73e8; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    /* 폼 스타일 */
+    .form-group { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    button.btn-primary { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; }
+    button.btn-primary:hover { background: #1557b0; }
+    
+    /* 카드 및 리스트 스타일 */
+    .part-card { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .part-title { font-weight: bold; color: #1a73e8; font-size: 15px; }
+    .part-info { font-size: 13px; color: #555; margin-top: 4px; }
+    .diag-box { background: #e8f0fe; padding: 12px; border-radius: 6px; margin-top: 10px; font-size: 13px; border-left: 4px solid #1a73e8; }
+    .history-item { background: #f9f9f9; border-left: 4px solid #1a73e8; padding: 10px; margin-bottom: 8px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚘 AutoMind</h1>
+    
+    <!-- 탭 상단 네비게이션 -->
+    <div class="tab-menu">
+      <button class="tab-btn active" onclick="openTab(event, 'tabDiag')">🚨 증상 진단</button>
+      <button class="tab-btn" onclick="openTab(event, 'tabParts')">🔩 부품 DB</button>
+      <button class="tab-btn" onclick="openTab(event, 'tabHistory')">📋 정비 이력</button>
+    </div>
+
+    <!-- 1. 증상 진단 탭 -->
+    <div id="tabDiag" class="tab-content active">
+      <div class="form-group">
+        <label for="symptomSelect">차량 이상 증상 선택</label>
+        <select id="symptomSelect" onchange="runDiagnosis()">
+          <option value="">-- 발생한 증상을 선택하세요 --</option>
+          <option value="battery">시동이 걸리지 않고 딸깍 소리만 남</option>
+          <option value="belt">엔진룸에서 찌르르/귀신 소리가 남</option>
+          <option value="brake">제동 시 끽하는 쇠 마찰 소리가 남</option>
+          <option value="vibration">주행 중 특정 속도에서 핸들이 떨림</option>
+        </select>
+      </div>
+      <div id="diagResult" class="diag-box" style="display:none;">
+        <strong id="diagTitle" style="font-size:15px; color:#d93025;"></strong>
+        <p id="diagDesc" style="margin-top:6px; color:#333;"></p>
+        <p id="diagAction" style="margin-top:8px; color:#1a73e8; font-weight:bold;"></p>
+      </div>
+    </div>
+
+    <!-- 2. 부품 정보 DB 탭 -->
+    <div id="tabParts" class="tab-content">
+      <div class="part-card">
+        <div class="part-title">🛢️ 엔진오일</div>
+        <div class="part-info">권장 교체 주기: 주행거리 7,500km ~ 10,000km 또는 1년</div>
+        <div class="part-info">주요 증상: 엔진 소음 증가, 연비 저하</div>
+      </div>
+      <div class="part-card">
+        <div class="part-title">🔋 자동차 배터리</div>
+        <div class="part-info">권장 교체 주기: 3년 ~ 4년 (전압 12.4V 이하 점검)</div>
+        <div class="part-info">주요 증상: 시동 반응 둔화, 헤드램프 빛 약화</div>
+      </div>
+      <div class="part-card">
+        <div class="part-title">🛑 브레이크 패드</div>
+        <div class="part-info">권장 교체 주기: 30,000km ~ 40,000km (잔량 3mm 이하 시 교체)</div>
+        <div class="part-info">주요 증상: 페달을 밟을 때 금속 마찰 소음 발생</div>
+      </div>
+    </div>
+
+    <!-- 3. 정비 이력 관리 탭 -->
+    <div id="tabHistory" class="tab-content">
+      <form id="recordForm">
+        <div class="form-group">
+          <label for="carModel">차종</label>
+          <input type="text" id="carModel" placeholder="예: 아반떼 CN7" required>
+        </div>
+        <div class="form-group">
+          <label for="symptomInput">정비/교체 항목</label>
+          <input type="text" id="symptomInput" placeholder="예: 엔진오일 및 필터 교체" required>
+        </div>
+        <div class="form-group">
+          <label for="cost">비용 (원)</label>
+          <input type="number" id="cost" placeholder="0" required>
+        </div>
+        <div class="form-group">
+          <label for="memo">메모</label>
+          <textarea id="memo" rows="2" placeholder="정비소 이름 또는 추가 참고사항"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">정비 이력 구글 시트에 저장</button>
+      </form>
+      <div style="margin-top:20px;">
+        <label>Recent Maintenance History</label>
+        <div id="recordsContainer" style="margin-top:8px;">기록을 불러오는 중...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ⚠️ 1단계에서 복사한 구글 Apps Script Web App URL을 아래 변수에 붙여넣으세요!
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby70U-JS21MMd-eNOVZeIvjtkyL0eqLFsZPFteWzBU94ApAwIjQ6LL-wC7lVE1O5lw08g/exec";
+
+    // 탭 전환 기능
+    function openTab(evt, tabId) {
+      const contents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+      
+      const buttons = document.getElementsByClassName("tab-btn");
+      for (let i = 0; i < buttons.length; i++) buttons[i].classList.remove("active");
+      
+      document.getElementById(tabId).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+
+    // 증상 진단 데이터베이스
+    const diagDB = {
+      battery: { title: "배터리 방전 의심", desc: "전압 부족으로 시동 모터를 돌리지 못하는 상태입니다.", action: "💡 조치: 가입된 보험사 긴급출동 배터리 점프 요청" },
+      belt: { title: "팬벨트(겉벨트) 노후화", desc: "구동벨트 장력 감소 또는 마모로 슬립 현상이 발생하고 있습니다.", action: "💡 조치: 가까운 정비소에서 벨트 장력 및 마모 상태 점검" },
+      brake: { title: "브레이크 패드 마모", desc: "패드 마모 한계선 쇠붙이가 디스크와 마찰하며 교체 시기를 알리는 소리입니다.", action: "💡 조치: 브레이크 패드 잔량 확인 후 즉시 교체" },
+      vibration: { title: "휠 밸런스 불균형", desc: "타이어 휠의 무게 균형이 맞지 않아 특정 속도에서 떨림이 발생합니다.", action: "💡 조치: 타이어 전문점에서 휠 밸런스 점검" }
+    };
+
+    function runDiagnosis() {
+      const val = document.getElementById('symptomSelect').value;
+      const resBox = document.getElementById('diagResult');
+      if (!val) { resBox.style.display = 'none'; return; }
+      
+      document.getElementById('diagTitle').textContent = diagDB[val].title;
+      document.getElementById('diagDesc').textContent = diagDB[val].desc;
+      document.getElementById('diagAction').textContent = diagDB[val].action;
+      resBox.style.display = 'block';
+    }
+
+    // 구글 시트에서 정비 이력 불러오기 (GET)
+    async function loadRecords() {
+      const container = document.getElementById('recordsContainer');
+      if (GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL_HERE") {
+        container.innerHTML = '<p style="font-size:12px; color:red;">GAS_WEB_APP_URL 변수에 복사한 URL을 입력해 주세요.</p>';
+        return;
+      }
+      
+      try {
+        const res = await fetch(GAS_WEB_APP_URL);
+        const data = await res.json();
+        container.innerHTML = '';
+        
+        if (!data || data.length === 0) { 
+          container.innerHTML = '<p style="font-size:12px; color:#666;">저장된 이력이 없습니다.</p>'; 
+          return; 
+        }
+        
+        data.reverse().forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'history-item';
+          const recordDate = item.Date ? new Date(item.Date).toLocaleDateString() : '날짜 미상';
+          div.innerHTML = `
+            <strong>${item.carModel || '차종 미입력'}</strong> - ${item.symptom || '내역 없음'}<br>
+            <small>비용: ${Number(item.cost || 0).toLocaleString()}원 | ${recordDate}</small>
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        container.innerHTML = '<p style="font-size:12px; color:red;">데이터를 불러오지 못했습니다. GAS 배포 권한을 확인해 주세요.</p>';
+      }
+    }
+
+    // 구글 시트로 정비 이력 전송하기 (POST)
+    document.getElementById('recordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const payload = {
+        carModel: document.getElementById('carModel').value,
+        symptom: document.getElementById('symptomInput').value,
+        cost: document.getElementById('cost').value,
+        memo: document.getElementById('memo').value
+      };
+
+      try {
+        await fetch(GAS_WEB_APP_URL, { 
+          method: 'POST', 
+          body: JSON.stringify(payload) 
+        });
+        alert('정비 이력이 구글 스프레드시트에 성공적으로 저장되었습니다!');
+        document.getElementById('recordForm').reset();
+        loadRecords();
+      } catch (err) { 
+        alert('저장에 실패했습니다. 네트워크 또는 GAS URL을 확인해 주세요.'); 
+      }
+    });
+
+    // 앱 초기화 실행
+    loadRecords();
+
+    // PWA 서비스 워커 등록
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
